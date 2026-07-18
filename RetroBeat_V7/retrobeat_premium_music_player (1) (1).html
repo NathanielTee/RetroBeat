@@ -1,0 +1,2248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetroBeat - Premium Neo-Retro Music Player</title>
+    <!-- Import premium, highly readable modern and retro typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS for modern component grid layout styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- jsmediatags for reliable local file tag parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
+
+    <style>
+        :root {
+            --accent-color: #39ff14;
+            --accent-glow: rgba(57, 255, 20, 0.25);
+            --secondary-accent: #00d9ff;
+            --bg-color: #0d0d0f;
+            --border-color: #3f3f46;
+            --panel-glass: rgba(18, 18, 22, 0.65);
+            --retro-shadow: 4px 4px 0px rgba(0, 0, 0, 0.6);
+            --sans-font: 'Space Grotesk', sans-serif;
+            --pixel-heading: 'VT323', monospace;
+            --pixel-label: 'Press Start 2P', monospace;
+        }
+
+        /* Ambient Dynamic Blurred Backdrop */
+        #dynamic-backdrop {
+            position: fixed;
+            top: -15%; left: -15%;
+            width: 130%; height: 130%;
+            filter: blur(120px) saturate(1.8);
+            opacity: 0.35;
+            z-index: -2;
+            transition: background 1.5s ease-in-out;
+            pointer-events: none;
+            animation: slowerDrift 30s infinite alternate ease-in-out;
+        }
+
+        @keyframes slowerDrift {
+            0% { transform: translate(0px, 0px) rotate(0deg); }
+            50% { transform: translate(40px, -30px) rotate(4deg); }
+            100% { transform: translate(-30px, 40px) rotate(-4deg); }
+        }
+
+        /* Scanline Overlay option */
+        #scanline-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 9999;
+            pointer-events: none;
+            opacity: 0.15;
+            display: none;
+        }
+
+        /* Modernized Custom Scrollbar Styles */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-left: 1px solid var(--border-color);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border: 2px solid rgba(0, 0, 0, 0.3);
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-color);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: #f4f4f5;
+            font-family: var(--sans-font);
+            overflow-x: hidden;
+            overflow-y: auto;
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M2 2V18L6 14H14L2 2Z' fill='%2339ff14' stroke='black' stroke-width='2'/%3E%3C/svg%3E"), auto;
+        }
+
+        /* Pixel Typography utilities */
+        .heading-font {
+            font-family: var(--pixel-heading), monospace;
+            letter-spacing: 0.05em;
+        }
+        .label-font {
+            font-family: var(--pixel-label), monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.02em;
+        }
+
+        /* Frosted Neo-Retro Glass Panels */
+        .glass-panel {
+            background: var(--panel-glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 2px solid var(--border-color);
+            box-shadow: var(--retro-shadow);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .glass-panel:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Chunky Neo-Retro Interactive Button */
+        .retro-btn {
+            background: rgba(24, 24, 27, 0.85);
+            border: 2px solid var(--border-color);
+            color: #e4e4e7;
+            transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+            font-family: var(--pixel-heading), monospace;
+            font-size: 1.1rem;
+            letter-spacing: 0.05em;
+        }
+        .retro-btn:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+            box-shadow: 0 0 8px var(--accent-glow);
+            transform: translateY(-1px);
+        }
+        .retro-btn:active, .retro-btn.active {
+            border-color: var(--accent-color);
+            background: rgba(57, 255, 20, 0.1);
+            color: var(--accent-color);
+            transform: translateY(1px);
+            box-shadow: inset 2px 2px 0px rgba(0,0,0,0.5);
+        }
+
+        /* Precision EQ Range Sliders */
+        .eq-slider-container {
+            position: relative;
+            height: 140px;
+        }
+        .eq-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 8px;
+            height: 120px;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid var(--border-color);
+            outline: none;
+            writing-mode: vertical-lr;
+            direction: rtl;
+            cursor: pointer;
+        }
+        .eq-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 10px;
+            background: var(--accent-color);
+            border: 1px solid #000;
+            cursor: pointer;
+            box-shadow: 0 0 5px var(--accent-color);
+        }
+
+        /* Time & volume slider modifications */
+        input[type="range"].flat-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(0, 0, 0, 0.5);
+            height: 6px;
+            border: 1px solid var(--border-color);
+            outline: none;
+        }
+        input[type="range"].flat-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: var(--accent-color);
+            border: 1px solid #111;
+            cursor: pointer;
+            box-shadow: 0 0 4px var(--accent-color);
+            transition: transform 0.1s;
+        }
+        input[type="range"].flat-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        /* Premium artwork container styling */
+        .artwork-wrapper {
+            position: relative;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s;
+        }
+        .artwork-wrapper:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+        .artwork-glow {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--accent-color);
+            filter: blur(30px);
+            opacity: 0.15;
+            z-index: -1;
+            transition: background 1s ease;
+        }
+
+        /* Floating music note keyframe animation */
+        @keyframes floatNoteUp {
+            0% {
+                transform: translateY(0) scale(0.8) rotate(0deg);
+                opacity: 0;
+            }
+            15% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-80px) scale(1.2) rotate(25deg);
+                opacity: 0;
+            }
+        }
+        .animate-float-note {
+            animation: floatNoteUp 2s ease-out forwards;
+        }
+
+        /* Draggable mini player widget styling */
+        #mini-player-widget {
+            position: fixed;
+            width: 220px;
+            z-index: 1000;
+            display: none;
+            cursor: move;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between pb-[130px]">
+
+    <!-- Ambient moving backdrop and Scanline effect -->
+    <div id="dynamic-backdrop"></div>
+    <div id="scanline-overlay"></div>
+
+    <!-- MAIN APP STRUCTURE -->
+    <div class="w-full max-w-[1700px] mx-auto p-4 md:p-6 flex flex-col gap-6 relative z-10 flex-grow">
+
+        <!-- HEADER NAVIGATION SYSTEM -->
+        <header class="glass-panel p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-zinc-950 border-2 border-dashed border-zinc-700 flex items-center justify-center">
+                    <span class="text-lime-400 font-bold text-sm heading-font">RB</span>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight heading-font text-white uppercase flex items-center gap-2">
+                        RetroBeat <span class="text-xs bg-zinc-800 text-zinc-400 px-2 py-0.5 border border-zinc-700 font-sans tracking-normal font-normal">v7.2 NEO</span>
+                    </h1>
+                </div>
+            </div>
+
+            <!-- Profile Info Widget -->
+            <div class="flex items-center gap-4">
+                <div id="header-profile-card" class="flex items-center gap-3 bg-zinc-950/60 px-3 py-1.5 border border-zinc-700 cursor-pointer hover:border-lime-400 transition" onclick="triggerProfileEditModal()">
+                    <div id="avatar-circle" class="w-8 h-8 bg-zinc-800 border border-zinc-700 flex items-center justify-center overflow-hidden">
+                        <span id="avatar-letter" class="font-bold text-sm text-lime-400 font-sans">U</span>
+                    </div>
+                    <div class="flex flex-col text-left">
+                        <span id="prof-display-name" class="font-bold text-sm leading-tight text-white font-sans">Retro User</span>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[10px] label-font text-zinc-400">LISTENER STATUS</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Clock system -->
+                <div class="text-right hidden sm:block">
+                    <span id="clock-display" class="heading-font text-xl text-zinc-400 tracking-widest">12:00:00 AM</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- THREE COLUMN GRID: 20% Library / 70% Music Center / 10% Utilities -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start flex-grow">
+
+            <!-- ============================================ -->
+            <!-- 20% LIBRARY PANEL (Left Sidebar Column)      -->
+            <!-- ============================================ -->
+            <aside class="col-span-1 lg:col-span-3 flex flex-col gap-4">
+                <section class="glass-panel p-4 flex flex-col gap-4">
+                    <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
+                        <span class="label-font text-zinc-400 uppercase">Music Library</span>
+                        <button class="retro-btn text-[10px] px-2 py-1 label-font" onclick="triggerDirectoryScanner()">📂 Open Folder</button>
+                    </div>
+
+                    <!-- Invisible File Inputs for processing directories -->
+                    <input type="file" id="directory-input-scanner" class="hidden" webkitdirectory directory multiple onchange="importLocalFolder(event)">
+
+                    <!-- Instantly responsive Search box -->
+                    <div class="relative">
+                        <input type="text" id="lib-search-input" class="w-full bg-zinc-950/60 border border-zinc-700 px-3 py-2 text-sm text-zinc-200 outline-none focus:border-lime-400 rounded-sm" placeholder="Search tracks, artists..." oninput="triggerLocalLibrarySearch()">
+                    </div>
+
+                    <!-- Filter Tabs -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="btn-tab-all" class="retro-btn text-[10px] py-1.5 font-bold label-font active" onclick="switchLibraryTab('all')">ALL TRACKS</button>
+                        <button id="btn-tab-favorites" class="retro-btn text-[10px] py-1.5 font-bold label-font" onclick="switchLibraryTab('favorites')">FAVORITES</button>
+                        <button id="btn-tab-queue" class="retro-btn text-[10px] py-1.5 font-bold label-font" onclick="switchLibraryTab('queue')">PLAY QUEUE</button>
+                        <button id="btn-tab-recent" class="retro-btn text-[10px] py-1.5 font-bold label-font" onclick="switchLibraryTab('recent')">RECENTS</button>
+                    </div>
+
+                    <!-- File viewport list container -->
+                    <div class="border border-zinc-800 bg-zinc-950/40 h-[380px] overflow-y-auto p-1.5 flex flex-col gap-1.5" id="library-viewport-holder">
+                        <div id="lib-empty-state" class="flex flex-col items-center justify-center text-center h-full p-4">
+                            <span class="text-3xl mb-2">📁</span>
+                            <span class="label-font text-[9px] text-zinc-500 uppercase block">Workspace empty</span>
+                            <p class="text-xs text-zinc-500 mt-2">Open a music directory or drop chiptunes below.</p>
+                        </div>
+                        <div id="library-songs-list" class="hidden flex flex-col gap-1"></div>
+                    </div>
+
+                    <!-- Drag & drop targets -->
+                    <div class="border-2 border-dashed border-zinc-700 bg-zinc-900/10 p-4 text-center rounded hover:border-lime-400 transition cursor-pointer" ondragover="event.preventDefault()" ondrop="handleMusicFolderDrop(event)" onclick="triggerDirectoryScanner()">
+                        <span class="text-xs text-zinc-500 block label-font">DRAG DIRECTORIES HERE</span>
+                    </div>
+                </section>
+            </aside>
+
+            <!-- ============================================ -->
+            <!-- 70% MUSIC EXPERIENCE PANEL (Center Column)   -->
+            <!-- ============================================ -->
+            <main class="col-span-1 lg:col-span-6 flex flex-col gap-6">
+                <section class="glass-panel p-6 flex flex-col gap-6 relative overflow-hidden">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                        <!-- Hero Album Cover representation -->
+                        <div class="md:col-span-5 flex justify-center">
+                            <div class="artwork-wrapper w-56 h-56 bg-zinc-950 border-2 border-zinc-700 flex items-center justify-center relative overflow-hidden shadow-2xl">
+                                <div class="artwork-glow" id="hero-art-ambient-glow"></div>
+                                <div id="hero-album-cover-holder" class="w-full h-full bg-cover bg-center flex items-center justify-center">
+                                    <canvas id="generative-pixel-cover" class="w-full h-full block" width="220" height="220"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Core Song details -->
+                        <div class="md:col-span-7 flex flex-col justify-between h-56">
+                            <div>
+                                <span class="label-font text-[9px] text-zinc-400 tracking-wider uppercase block mb-1">NOW PLAYING</span>
+                                <h2 id="core-track-title" class="text-2xl font-bold tracking-tight text-white font-sans truncate">STATION IDLE</h2>
+                                <h3 id="core-track-artist" class="text-base text-zinc-400 font-medium truncate mt-1">Ready to play local music</h3>
+                                <p id="core-track-album" class="text-xs text-zinc-500 font-semibold truncate mt-1">Import folder directory recursively</p>
+                            </div>
+
+                            <!-- Integrated diagnostic stream specs box -->
+                            <div class="flex items-center gap-3 bg-zinc-950/80 border border-zinc-800 p-2 text-xs text-zinc-400 mt-2 font-mono">
+                                <div><span class="text-zinc-600">CODEC:</span> <span id="spec-lbl-codec" class="text-zinc-300">N/A</span></div>
+                                <div class="text-zinc-800">|</div>
+                                <div><span class="text-zinc-600">RATE:</span> <span id="spec-lbl-sample" class="text-zinc-300">N/A</span></div>
+                                <div class="text-zinc-800">|</div>
+                                <div><span class="text-zinc-600">SIZE:</span> <span id="spec-lbl-size" class="text-zinc-300">N/A</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- REAL-TIME WAVE AUDIO SPECTRUM VISUALIZER -->
+                    <div class="mt-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="label-font text-[9px] text-zinc-400 tracking-wider">AUDIO_WAVE_ANALYSER</span>
+                            <div class="flex gap-1.5">
+                                <button id="viz-btn-bars" class="retro-btn text-[9px] px-2 py-0.5 active label-font" onclick="setVisualizerStyle('bars')">BARS</button>
+                                <button id="viz-btn-wave" class="retro-btn text-[9px] px-2 py-0.5 label-font" onclick="setVisualizerStyle('wave')">WAVE</button>
+                                <button id="viz-btn-circle" class="retro-btn text-[9px] px-2 py-0.5 label-font" onclick="setVisualizerStyle('circle')">CIRCLE</button>
+                                <button id="viz-btn-matrix" class="retro-btn text-[9px] px-2 py-0.5 label-font" onclick="setVisualizerStyle('matrix')">MATRIX</button>
+                            </div>
+                        </div>
+                        <div class="border border-zinc-800 bg-zinc-950/80 h-32 relative">
+                            <canvas id="live-spectrum-canvas" class="w-full h-full block"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- WORKSPACE BOTTOM PANEL (Combined Play Queue & Recently Played Tab Deck) -->
+                <section class="glass-panel p-4 flex flex-col gap-4">
+                    <div class="flex border-b border-zinc-800 gap-2">
+                        <button id="deck-btn-queue" class="retro-btn px-4 py-2 text-xs label-font active" onclick="setMainDeckTab('queue')">Active Play Queue</button>
+                        <button id="deck-btn-recent" class="retro-btn px-4 py-2 text-xs label-font" onclick="setMainDeckTab('recent')">Recently Played Tracks</button>
+                        <button id="deck-btn-stats" class="retro-btn px-4 py-2 text-xs label-font" onclick="setMainDeckTab('stats')">Technical Audio Stats</button>
+                    </div>
+
+                    <div id="deck-scrollable-content" class="min-h-[140px] max-h-[220px] overflow-y-auto">
+                        <!-- Playback lists render inside here -->
+                        <div id="main-deck-container" class="flex flex-col gap-1.5"></div>
+                    </div>
+                </section>
+            </main>
+
+            <!-- ============================================ -->
+            <!-- 10% UTILITIES AND COMPANION (Right Sidebar)  -->
+            <!-- ============================================ -->
+            <aside class="col-span-1 lg:col-span-3 flex flex-col gap-4">
+                
+                <!-- MASCOT COMPANION PIXEL ART SCREEN -->
+                <section class="glass-panel p-4 flex flex-col gap-3">
+                    <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
+                        <span class="label-font text-zinc-400 uppercase">Mascot Companion</span>
+                    </div>
+
+                    <!-- SVG Pixel Companion Display Screen -->
+                    <div id="pet-display-screen" class="bg-zinc-950/80 border border-zinc-800 h-40 flex items-center justify-center relative overflow-hidden">
+                        <div id="pet-companion-avatar" class="transition-all duration-150 transform origin-bottom scale-100">
+                            <!-- Direct inline dynamic pixel coordinates grid rendering -->
+                            <svg id="cat-pixel-canvas" class="w-24 h-24" viewBox="0 0 16 16" fill="currentColor">
+                                <!-- Rendered dynamically by active JS anim loops -->
+                            </svg>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SLIDERS EQUALIZER DECK (5-Bands Parametric Interface) -->
+                <section class="glass-panel p-4 flex flex-col gap-3">
+                    <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
+                        <span class="label-font text-zinc-400 uppercase">Equalizer</span>
+                        <button class="text-[9px] text-zinc-500 hover:text-white label-font" onclick="resetAllEQBands()">RESET</button>
+                    </div>
+
+                    <div class="flex justify-between gap-1 bg-zinc-950/60 p-2 border border-zinc-800 rounded-sm">
+                        <!-- Band sliders map out values: 100Hz, 350Hz, 1.2kHz, 4.5kHz, 12kHz -->
+                        <div class="flex flex-col items-center">
+                            <span class="text-[8px] text-zinc-500 label-font">100Hz</span>
+                            <div class="eq-slider-container flex justify-center items-center py-2">
+                                <input type="range" class="eq-slider" id="eq-band-0" min="-12" max="12" value="0" step="1" orient="vertical" oninput="adjustSpecificEQBand(0, this.value)">
+                            </div>
+                            <span id="eq-lbl-0" class="text-[9px] text-lime-400 font-mono">0dB</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <span class="text-[8px] text-zinc-500 label-font">350Hz</span>
+                            <div class="eq-slider-container flex justify-center items-center py-2">
+                                <input type="range" class="eq-slider" id="eq-band-1" min="-12" max="12" value="0" step="1" orient="vertical" oninput="adjustSpecificEQBand(1, this.value)">
+                            </div>
+                            <span id="eq-lbl-1" class="text-[9px] text-lime-400 font-mono">0dB</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <span class="text-[8px] text-zinc-500 label-font">1.2kHz</span>
+                            <div class="eq-slider-container flex justify-center items-center py-2">
+                                <input type="range" class="eq-slider" id="eq-band-2" min="-12" max="12" value="0" step="1" orient="vertical" oninput="adjustSpecificEQBand(2, this.value)">
+                            </div>
+                            <span id="eq-lbl-2" class="text-[9px] text-lime-400 font-mono">0dB</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <span class="text-[8px] text-zinc-500 label-font">4.5kHz</span>
+                            <div class="eq-slider-container flex justify-center items-center py-2">
+                                <input type="range" class="eq-slider" id="eq-band-3" min="-12" max="12" value="0" step="1" orient="vertical" oninput="adjustSpecificEQBand(3, this.value)">
+                            </div>
+                            <span id="eq-lbl-3" class="text-[9px] text-lime-400 font-mono">0dB</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <span class="text-[8px] text-zinc-500 label-font">12kHz</span>
+                            <div class="eq-slider-container flex justify-center items-center py-2">
+                                <input type="range" class="eq-slider" id="eq-band-4" min="-12" max="12" value="0" step="1" orient="vertical" oninput="adjustSpecificEQBand(4, this.value)">
+                            </div>
+                            <span id="eq-lbl-4" class="text-[9px] text-lime-400 font-mono">0dB</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- GLOBAL PREFERENCES BOX -->
+                <section class="glass-panel p-4 flex flex-col gap-3">
+                    <span class="label-font text-zinc-400 border-b border-zinc-800 pb-2 block uppercase">Utility Panel</span>
+                    <button class="retro-btn py-1.5 text-xs label-font w-full" onclick="triggerSettingsPreferencesModal()">⚙️ Preferences</button>
+                    <button class="retro-btn py-1.5 text-xs label-font w-full" onclick="triggerSleepTimerPrompt()">⏳ Sleep Timer</button>
+                </section>
+            </aside>
+        </div>
+    </div>
+
+    <!-- STICKY TASKBAR PLAYER INTERFACE -->
+    <footer class="glass-panel fixed bottom-0 left-0 right-0 w-full z-50 p-4 border-t-4 h-[105px] flex items-center">
+        <div class="max-w-[1600px] mx-auto w-full flex flex-col gap-1.5">
+            
+            <!-- Seek Progress tracker -->
+            <div class="flex items-center gap-3 w-full">
+                <span id="seek-lbl-current" class="text-xs font-bold text-lime-400 font-mono w-12 text-right">00:00</span>
+                <div class="flex-grow relative h-4 flex items-center">
+                    <input type="range" id="global-seek-bar" min="0" value="0" step="0.1" class="w-full cursor-pointer flat-slider" oninput="adjustPlaybackTimeline(event)">
+                </div>
+                <span id="seek-lbl-total" class="text-xs font-bold text-lime-400 font-mono w-12 text-left">00:00</span>
+            </div>
+
+            <!-- Media Deck buttons -->
+            <div class="flex items-center justify-between gap-4">
+                <div class="flex items-center gap-2">
+                    <button class="retro-btn w-8 h-8 flex items-center justify-center text-xs" onclick="playPreviousTrack()" title="Previous Track (Left Arrow)">⏮</button>
+                    <button id="ctrl-btn-play" class="retro-btn w-10 h-10 flex items-center justify-center text-sm font-bold text-lime-400" onclick="togglePlayPauseState()" title="Play/Pause (Space)">▶</button>
+                    <button id="ctrl-btn-stop" class="retro-btn w-8 h-8 flex items-center justify-center text-xs" onclick="stopAudioPlayback()" title="Stop audio playback">⏹</button>
+                    <button class="retro-btn w-8 h-8 flex items-center justify-center text-xs" onclick="playNextTrack()" title="Next Track (Right Arrow)">⏭</button>
+                    <button id="ctrl-btn-shuffle" class="retro-btn w-8 h-8 flex items-center justify-center text-xs ml-2" onclick="toggleShuffleMode()" title="Toggle Shuffle">🔀</button>
+                    <button id="ctrl-btn-repeat" class="retro-btn w-8 h-8 flex items-center justify-center text-xs" onclick="toggleRepeatMode()" title="Toggle Repeat">🔁</button>
+                </div>
+
+                <!-- Sticky Now Playing HUD -->
+                <div class="hidden md:flex flex-col leading-tight max-w-[280px] overflow-hidden truncate">
+                    <span id="sticky-title" class="text-xs font-bold text-white truncate font-sans">STATION IDLE</span>
+                    <span id="sticky-artist" class="text-[10px] text-zinc-400 truncate font-sans">No file streaming</span>
+                </div>
+
+                <!-- Live audio modifications sliders (Volume / Speed rate) -->
+                <div class="flex items-center gap-6">
+                    <!-- Volume element -->
+                    <div class="flex items-center gap-2">
+                        <span class="text-zinc-500 font-bold uppercase text-[9px] label-font">VOL</span>
+                        <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.75" class="w-24 flat-slider" oninput="adjustVolumeLevel(this.value)">
+                        <span id="volume-lbl-display" class="text-lime-400 font-bold font-mono text-xs w-8 text-right">75%</span>
+                    </div>
+
+                    <!-- Pitch Speed Rate element -->
+                    <div class="flex items-center gap-2">
+                        <span class="text-zinc-500 font-bold uppercase text-[9px] label-font">PITCH</span>
+                        <input type="range" id="pitch-slider" min="50" max="150" value="100" class="w-20 flat-slider" oninput="adjustPlaybackSpeedRate(this.value)">
+                        <span id="pitch-lbl-display" class="text-lime-400 font-bold font-mono text-xs w-8 text-right">1.0x</span>
+                    </div>
+                </div>
+
+                <!-- Star details toggler -->
+                <div class="flex items-center gap-2">
+                    <button id="favorite-track-toggler" class="retro-btn w-8 h-8 flex items-center justify-center text-xs text-zinc-500" onclick="toggleActiveTrackStarredState()" title="Add to Favorites">💖</button>
+                    <button class="retro-btn px-2.5 py-1 text-[9px] label-font" onclick="toggleSettingsModal(true)">PREFERENCES</button>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- INTERACTIVE FLOATING MINI PLAYER WIDGET -->
+    <div id="mini-player-widget" class="glass-panel p-3 flex flex-col gap-2 rounded shadow-2xl">
+        <div id="mini-player-handle" class="flex justify-between items-center border-b border-zinc-800 pb-1 cursor-grab active:cursor-grabbing">
+            <span class="label-font text-[8px] text-yellow-400 uppercase">RetroBeat Mini</span>
+            <button class="text-rose-500 text-[10px] font-bold" onclick="toggleMiniPlayerWidget(false)">✖</button>
+        </div>
+        <div class="flex gap-2 items-center">
+            <div id="mini-cover" class="w-10 h-10 bg-zinc-950 border border-zinc-700 bg-cover bg-center"></div>
+            <div class="flex flex-col min-w-0 flex-grow">
+                <span id="mini-title" class="text-xs font-bold text-white truncate">STATION IDLE</span>
+                <span id="mini-artist" class="text-[9px] text-zinc-400 truncate">No Track Selected</span>
+            </div>
+        </div>
+        <div class="flex justify-between items-center">
+            <button class="retro-btn text-[10px] px-2 py-0.5" onclick="playPreviousTrack()">⏮</button>
+            <button id="mini-btn-play" class="retro-btn text-[10px] px-3 py-0.5 text-lime-400" onclick="togglePlayPauseState()">▶</button>
+            <button class="retro-btn text-[10px] px-2 py-0.5" onclick="playNextTrack()">⏭</button>
+        </div>
+    </div>
+
+    <!-- MODAL OVERLAYS (Boot forms / Scanners / Message alerts) -->
+    <div id="boot-setup-overlay" class="fixed inset-0 bg-black/95 backdrop-blur-md z-[99999] flex items-center justify-center hidden">
+        <div class="glass-panel max-w-sm w-full p-6 flex flex-col gap-4 text-center mx-4">
+            <h3 class="label-font text-yellow-400 text-xs uppercase">RetroBeat System Boot</h3>
+            <p class="text-zinc-400 text-xs leading-relaxed">Establish your workspace settings to initialize the local audio engine database.</p>
+            
+            <div class="flex flex-col gap-1 text-left">
+                <label class="text-[9px] text-cyan-400 label-font">USER_NAME:</label>
+                <input type="text" id="boot-username-input" class="bg-zinc-950 border border-zinc-700 p-2.5 text-lime-400 text-sm outline-none focus:border-lime-400 rounded-sm font-semibold tracking-wider uppercase" placeholder="NATHARA">
+            </div>
+
+            <div class="flex flex-col gap-2 text-left">
+                <label class="text-[9px] text-cyan-400 label-font">WORKSPACE ACCENT THEME:</label>
+                <div class="grid grid-cols-5 gap-2 bg-zinc-950/40 p-2.5 border border-zinc-800 rounded-sm">
+                    <button class="w-8 h-8 bg-[#39ff14] border-2 border-zinc-700" onclick="setAccentTheme('toxic', '#39ff14')"></button>
+                    <button class="w-8 h-8 bg-[#00d9ff] border-2 border-zinc-700" onclick="setAccentTheme('cyber', '#00d9ff')"></button>
+                    <button class="w-8 h-8 bg-[#ff4f6d] border-2 border-zinc-700" onclick="setAccentTheme('cherry', '#ff4f6d')"></button>
+                    <button class="w-8 h-8 bg-[#ff8a00] border-2 border-zinc-700" onclick="setAccentTheme('orange', '#ff8a00')"></button>
+                    <button class="w-8 h-8 bg-[#ffffff] border-2 border-zinc-700" onclick="setAccentTheme('pure', '#ffffff')"></button>
+                </div>
+            </div>
+
+            <button class="retro-btn py-2 text-xs text-lime-400 border-lime-500 mt-2 font-bold label-font" onclick="saveInitialUserProfile()">INITIALIZE BOOT</button>
+        </div>
+    </div>
+
+    <!-- DIRECTORY IMPORT METADATA PROGRESS SCANNER OVERLAY -->
+    <div id="metadata-scanner-overlay" class="fixed inset-0 bg-black/95 backdrop-blur-md z-[999999] flex items-center justify-center hidden">
+        <div class="glass-panel max-w-md w-full p-6 flex flex-col gap-4 text-center mx-4">
+            <h3 id="scanner-state-title" class="label-font text-yellow-400 text-xs uppercase">INDEXING FOLDERS...</h3>
+            <div class="w-16 h-16 bg-zinc-950 border border-zinc-800 flex items-center justify-center mx-auto rounded relative overflow-hidden">
+                <svg class="w-10 h-10 text-lime-400 animate-pulse" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M1 3h14v11H1z"/>
+                    <path d="M14 6H2V4h12z"/>
+                </svg>
+            </div>
+            <p id="scanner-current-status" class="text-xs text-zinc-300 font-semibold tracking-wide font-sans">Locating target streams...</p>
+            
+            <div class="w-full bg-zinc-950 border border-zinc-800 h-6 p-1 rounded-sm relative overflow-hidden">
+                <div id="scanner-progressbar-fill" class="h-full bg-gradient-to-r from-lime-600 to-lime-400 w-0 transition-all duration-150"></div>
+                <span id="scanner-progressbar-percent" class="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white font-mono">0%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- PREFERENCES SYSTEM SYSTEM SETTINGS MODAL -->
+    <div id="preferences-settings-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-[99999] flex items-center justify-center hidden">
+        <div class="glass-panel max-w-md w-full p-6 flex flex-col gap-4 mx-4">
+            <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
+                <h3 class="label-font text-yellow-400 text-xs uppercase">SYSTEM SETTINGS</h3>
+                <button class="text-rose-500 font-bold font-sans text-xl" onclick="toggleSettingsModal(false)">✖</button>
+            </div>
+            
+            <div class="flex flex-col gap-4 max-h-[380px] overflow-y-auto pr-1">
+                <div class="flex flex-col gap-1">
+                    <label class="text-[9px] text-cyan-400 label-font uppercase">Accent Color Theme</label>
+                    <select id="pref-color-theme" class="bg-zinc-950 border border-zinc-700 text-xs text-lime-400 p-1.5 outline-none rounded-sm" onchange="applyColorThemeBySelection(this.value)">
+                        <option value="toxic">TOXIC NEON GREEN</option>
+                        <option value="cyber">CYBER ICE BLUE</option>
+                        <option value="cherry">CHERRY RED</option>
+                        <option value="orange">RETRO AMBER ORANGE</option>
+                        <option value="pure">MINIMALIST WHITE</option>
+                    </select>
+                </div>
+                <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
+                    <span class="text-sm font-semibold text-zinc-300 font-sans">Enable Scanline overlay</span>
+                    <input type="checkbox" id="pref-scanlines-active" class="w-4 h-4 accent-lime-500" onchange="togglePreferencesFilters()">
+                </div>
+                <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
+                    <span class="text-sm font-semibold text-zinc-300 font-sans">Enable Companion Mascot</span>
+                    <input type="checkbox" id="pref-companion-active" class="w-4 h-4 accent-lime-500" onchange="togglePreferencesFilters()">
+                </div>
+                <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
+                    <span class="text-sm font-semibold text-zinc-300 font-sans">Floating Mini Player</span>
+                    <input type="checkbox" id="pref-miniplayer-active" class="w-4 h-4 accent-lime-500" onchange="toggleMiniPlayerOption(this.checked)">
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-[9px] text-cyan-400 label-font uppercase">ACCENT FONTS FAMILY</label>
+                    <select id="pref-fonts-family" class="bg-zinc-950 border border-zinc-700 text-xs text-lime-400 p-1.5 outline-none rounded-sm" onchange="togglePreferencesFilters()">
+                        <option value="space">Space Grotesk Sans</option>
+                        <option value="inter">Inter Standard Sans</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="retro-btn py-2 text-xs font-bold text-lime-400 border-lime-500 label-font" onclick="toggleSettingsModal(false)">SAVE & COMMIT</button>
+        </div>
+    </div>
+
+    <!-- UNIVERSAL POPUP DIALOGS (Replacing window.alert) -->
+    <div id="universal-prompt-box" class="fixed inset-0 bg-black/90 backdrop-blur-sm z-[999999] flex items-center justify-center hidden">
+        <div class="glass-panel max-w-sm w-full p-5 flex flex-col gap-4 text-center mx-4">
+            <h3 id="u-prompt-title" class="label-font text-yellow-400 text-[10px] uppercase">Alert Notice</h3>
+            <p id="u-prompt-body" class="text-sm leading-relaxed font-semibold font-sans">Diagnostic details log...</p>
+            <div id="u-prompt-input-wrapper" class="hidden">
+                <input type="text" id="u-prompt-text-input" class="bg-zinc-950 border border-zinc-700 p-2 text-lime-400 text-sm outline-none focus:border-lime-400 rounded-sm w-full font-bold">
+            </div>
+            <div class="flex justify-center gap-2 mt-2">
+                <button id="u-prompt-btn-cancel" class="retro-btn px-4 py-1.5 text-xs label-font hidden" onclick="closeUniversalPromptDialog(false)">CANCEL</button>
+                <button id="u-prompt-btn-ok" class="retro-btn px-5 py-1.5 text-xs font-bold label-font" onclick="closeUniversalPromptDialog(true)">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUDIO CORE ARCHITECTURE SCRIPTS ENGINE -->
+    <script>
+        // CORE AUDIO VARIABLES - SINGLE GLOBAL INSTANCE ONLY
+        let audioCtx = null;
+        let mainAnalyserNode = null;
+        let audioGainNode = null;
+        let sourceElementNode = null;
+        const globalAudio = new Audio();
+
+        // Equalizer Nodes
+        let eqBiquadFilters = [];
+        const eqFrequencies = [100, 350, 1200, 4500, 12000];
+        const eqFilterTypes = ["lowshelf", "peaking", "peaking", "peaking", "highshelf"];
+        let userEQSettings = [0, 0, 0, 0, 0];
+
+        // Library database registers
+        let localTracksRegister = [];
+        let favoriteTracksIDs = [];
+        let playbackQueue = [];
+        let recentlyPlayedTracks = [];
+        let activeSongIndex = -1;
+
+        // Player states
+        let isTrackPlaying = false;
+        let isRepeatModeEnabled = false;
+        let isShuffleModeEnabled = false;
+        let activeLibraryTab = 'all';
+        let activeDeckTab = 'queue';
+
+        // Animated components variables
+        let visualizerRenderStyle = 'bars';
+        let preferencesScanlinesActive = false;
+        let preferencesCompanionActive = true;
+        let activeAccentTheme = 'toxic';
+        let activeAccentHex = '#39ff14';
+        let activeFontsStyle = 'space';
+
+        // User profile states
+        let userProfileDisplayName = "Nathara";
+
+        // Specialized Companion Cat Parameters
+        let catFrameCounter = 0;
+        let catLastActionTime = 0;
+        let isBlinking = false;
+        let isEarTwitching = false;
+        let musicNoteSpawnIntervalRef = null;
+
+        // Sleep clock timers
+        let sleepTimerSecondsRemaining = 0;
+        let sleepTimerIntervalRef = null;
+
+        // High-Quality Fallback Synthetic 8-Bit Chiptune loops
+        const nativeChiptuneFallbackTracks = [
+            { id: "synth_1", title: "Retro Pixel Odyssey", artist: "Nathara Synth Engine", album: "Chiptune Genesis (Native Fallback)", duration: 45, size: "Internal Synthesizer", sampleRate: "48.0 kHz", bitrate: "Virtual Soundcard", isFallback: true },
+            { id: "synth_2", title: "Neon Skyline Ascent", artist: "Nathara Synth Engine", album: "Chiptune Genesis (Native Fallback)", duration: 52, size: "Internal Synthesizer", sampleRate: "48.0 kHz", bitrate: "Virtual Soundcard", isFallback: true },
+            { id: "synth_3", title: "Cyber Pet Adventure", artist: "Nathara Synth Engine", album: "Chiptune Genesis (Native Fallback)", duration: 38, size: "Internal Synthesizer", sampleRate: "48.0 kHz", bitrate: "Virtual Soundcard", isFallback: true }
+        ];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            localTracksRegister = [...nativeChiptuneFallbackTracks];
+            restoreSettingsFromLocalCache();
+            setupEQSlidersInputListeners();
+            startSpectrumVisualizerRenderLoop();
+            startMascotPetAnimationLoop();
+            startSystemRealTimeClock();
+            updateTracksLibraryListUI();
+            updateMainDeckLayoutTabs();
+            setupKeyboardAndDragEvents();
+            setupAudioElementStateSync();
+        });
+
+        // Setup HTML5 audio state listener to stay synchronized to the hardware layer
+        function setupAudioElementStateSync() {
+            globalAudio.addEventListener('timeupdate', () => {
+                if (activeSongIndex === -1 || localTracksRegister[activeSongIndex]?.isFallback) return;
+                const current = globalAudio.currentTime;
+                document.getElementById('global-seek-bar').value = current;
+                document.getElementById('seek-lbl-current').textContent = formatSecondsToMinutes(current);
+            });
+
+            globalAudio.addEventListener('loadedmetadata', () => {
+                if (activeSongIndex === -1 || localTracksRegister[activeSongIndex]?.isFallback) return;
+                const duration = globalAudio.duration || 0;
+                document.getElementById('global-seek-bar').max = duration;
+                document.getElementById('seek-lbl-total').textContent = formatSecondsToMinutes(duration);
+            });
+
+            globalAudio.addEventListener('ended', () => {
+                playNextTrack();
+            });
+        }
+
+        // Setup drag and drop + keystroke shortcut rules
+        function setupKeyboardAndDragEvents() {
+            window.addEventListener('keydown', (e) => {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    togglePlayPauseState();
+                } else if (e.code === 'ArrowLeft') {
+                    e.preventDefault();
+                    skipPlaybackInterval(-5);
+                } else if (e.code === 'ArrowRight') {
+                    e.preventDefault();
+                    skipPlaybackInterval(5);
+                }
+            });
+
+            // Make floating mini-player draggable
+            const mini = document.getElementById('mini-player-widget');
+            const handle = document.getElementById('mini-player-handle');
+            let isDragging = false;
+            let currentX, currentY, initialX, initialY, xOffset = 0, yOffset = 0;
+
+            handle.addEventListener('mousedown', (e) => {
+                initialX = e.clientX - xOffset;
+                initialY = e.clientY - yOffset;
+                isDragging = true;
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    e.preventDefault();
+                    currentX = e.clientX - initialX;
+                    currentY = e.clientY - initialY;
+                    xOffset = currentX;
+                    yOffset = currentY;
+                    mini.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+                }
+            });
+
+            window.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+        }
+
+        // RESTORE / CACHE SYSTEM PREFERENCES
+        function restoreSettingsFromLocalCache() {
+            try {
+                const rawProfile = localStorage.getItem('retrobeat_profile_cache');
+                const rawFavs = localStorage.getItem('retrobeat_favorites_cache');
+                const rawQueue = localStorage.getItem('retrobeat_queue_cache');
+                const rawRecents = localStorage.getItem('retrobeat_recents_cache');
+                const rawPreferences = localStorage.getItem('retrobeat_preferences_cache');
+
+                if (rawProfile) {
+                    const parsed = JSON.parse(rawProfile);
+                    userProfileDisplayName = parsed.username || "Nathara";
+                } else {
+                    document.getElementById('boot-setup-overlay').classList.remove('hidden');
+                }
+
+                if (rawFavs) favoriteTracksIDs = JSON.parse(rawFavs);
+                if (rawQueue) playbackQueue = JSON.parse(rawQueue);
+                if (rawRecents) recentlyPlayedTracks = JSON.parse(rawRecents);
+
+                if (rawPreferences) {
+                    const p = JSON.parse(rawPreferences);
+                    visualizerRenderStyle = p.vizStyle || 'bars';
+                    activeAccentTheme = p.theme || 'toxic';
+                    activeAccentHex = p.accentHex || '#39ff14';
+                    preferencesCompanionActive = p.companionActive ?? true;
+                    preferencesScanlinesActive = p.scanlinesActive ?? false;
+                    activeFontsStyle = p.fontsStyle || 'space';
+                    userEQSettings = p.eqValues || [0, 0, 0, 0, 0];
+
+                    document.getElementById('volume-slider').value = p.volume ?? 0.75;
+                    document.getElementById('pitch-slider').value = p.playbackPitch ?? 100;
+                    document.getElementById('pref-color-theme').value = activeAccentTheme;
+                }
+
+                applyAccentThemeStyles();
+                applyPreferencesFiltersUI();
+                updateProfileLayoutCards();
+            } catch (err) {
+                console.warn("Error attempting to restore cached configurations", err);
+            }
+        }
+
+        function saveSystemSettingsToCache() {
+            try {
+                const profileObj = { username: userProfileDisplayName };
+                const prefObj = {
+                    vizStyle: visualizerRenderStyle,
+                    theme: activeAccentTheme,
+                    accentHex: activeAccentHex,
+                    companionActive: preferencesCompanionActive,
+                    scanlinesActive: preferencesScanlinesActive,
+                    fontsStyle: activeFontsStyle,
+                    eqValues: userEQSettings,
+                    volume: document.getElementById('volume-slider') ? document.getElementById('volume-slider').value : 0.75,
+                    playbackPitch: document.getElementById('pitch-slider') ? document.getElementById('pitch-slider').value : 100
+                };
+
+                localStorage.setItem('retrobeat_profile_cache', JSON.stringify(profileObj));
+                localStorage.setItem('retrobeat_favorites_cache', JSON.stringify(favoriteTracksIDs));
+                localStorage.setItem('retrobeat_queue_cache', JSON.stringify(playbackQueue));
+                localStorage.setItem('retrobeat_recents_cache', JSON.stringify(recentlyPlayedTracks));
+                localStorage.setItem('retrobeat_preferences_cache', JSON.stringify(prefObj));
+            } catch (err) {
+                console.warn("Could not synchronize system state to local cache storage.", err);
+            }
+        }
+
+        // BOOT DIALOG LAYOUT SAVER
+        function saveInitialUserProfile() {
+            const val = document.getElementById('boot-username-input').value.trim();
+            userProfileDisplayName = val ? val : "NATHARA";
+            document.getElementById('boot-setup-overlay').classList.add('hidden');
+            saveSystemSettingsToCache();
+            updateProfileLayoutCards();
+        }
+
+        function triggerProfileEditModal() {
+            document.getElementById('boot-username-input').value = userProfileDisplayName;
+            document.getElementById('boot-setup-overlay').classList.remove('hidden');
+        }
+
+        function updateProfileLayoutCards() {
+            document.getElementById('prof-display-name').textContent = userProfileDisplayName.toUpperCase();
+            document.getElementById('avatar-letter').textContent = userProfileDisplayName.charAt(0).toUpperCase();
+        }
+
+        // ACCENT THEMES LOGIC
+        function applyAccentThemeStyles() {
+            const themes = {
+                toxic: { accent: '#39ff14', secondary: '#00d9ff', bg: '#0b0c10' },
+                cyber: { accent: '#00d9ff', secondary: '#ff4f6d', bg: '#080d1a' },
+                cherry: { accent: '#ff4f6d', secondary: '#ffbc42', bg: '#14080e' },
+                orange: { accent: '#ff8a00', secondary: '#39ff14', bg: '#120a05' },
+                pure: { accent: '#ffffff', secondary: '#888888', bg: '#0e0e11' }
+            };
+
+            const sel = themes[activeAccentTheme] || themes.toxic;
+            activeAccentHex = sel.accent;
+
+            document.documentElement.style.setProperty('--accent-color', sel.accent);
+            document.documentElement.style.setProperty('--secondary-accent', sel.secondary);
+            document.documentElement.style.setProperty('--bg-color', sel.bg);
+            document.documentElement.style.setProperty('--accent-glow', `${sel.accent}44`);
+
+            // Synchronize active slider track coloring
+            document.querySelectorAll('input[type="range"].flat-slider').forEach(s => {
+                s.style.setProperty('--accent-color', sel.accent);
+            });
+        }
+
+        function setAccentTheme(theme, hex) {
+            activeAccentTheme = theme;
+            activeAccentHex = hex;
+            applyAccentThemeStyles();
+            saveSystemSettingsToCache();
+        }
+
+        function applyColorThemeBySelection(val) {
+            activeAccentTheme = val;
+            applyAccentThemeStyles();
+            saveSystemSettingsToCache();
+        }
+
+        // INTERFACE PREFERENCES MODIFICATIONS
+        function applyPreferencesFiltersUI() {
+            document.getElementById('pref-companion-active').checked = preferencesCompanionActive;
+            document.getElementById('pref-scanlines-active').checked = preferencesScanlinesActive;
+            document.getElementById('pref-fonts-family').value = activeFontsStyle;
+
+            // Apply Scanlines overlay
+            document.getElementById('scanline-overlay').style.display = preferencesScanlinesActive ? 'block' : 'none';
+
+            // Apply Companion Mascot display
+            const companionFrame = document.getElementById('cat-pixel-canvas').parentElement.parentElement;
+            companionFrame.style.display = preferencesCompanionActive ? 'flex' : 'none';
+
+            // Typography configurations
+            if (activeFontsStyle === 'inter') {
+                document.body.style.fontFamily = "'Inter', sans-serif";
+            } else {
+                document.body.style.fontFamily = "'Space Grotesk', sans-serif";
+            }
+        }
+
+        function togglePreferencesFilters() {
+            preferencesCompanionActive = document.getElementById('pref-companion-active').checked;
+            preferencesScanlinesActive = document.getElementById('pref-scanlines-active').checked;
+            activeFontsStyle = document.getElementById('pref-fonts-family').value;
+            applyPreferencesFiltersUI();
+            saveSystemSettingsToCache();
+        }
+
+        // UNIFIED AUDIO CONTEXT HARDWARE CONNECTION PIPELINE (Stabilized)
+        function connectWebAudioContextHardware() {
+            if (audioCtx) {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                return;
+            }
+
+            try {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContextClass();
+
+                // Build a single global Media Element Node connected directly into globalAudio
+                // This will never be disconnected or re-created, solving native stream playback bugs
+                sourceElementNode = audioCtx.createMediaElementSource(globalAudio);
+
+                // Build Equalizer chains in series
+                let tempNode = sourceElementNode;
+                eqBiquadFilters = [];
+
+                eqFrequencies.forEach((freq, idx) => {
+                    const filter = audioCtx.createBiquadFilter();
+                    filter.type = eqFilterTypes[idx];
+                    filter.frequency.value = freq;
+                    filter.gain.value = userEQSettings[idx];
+
+                    tempNode.connect(filter);
+                    tempNode = filter;
+                    eqBiquadFilters.push(filter);
+                });
+
+                // Standard Gain Hardware node controls volume output
+                audioGainNode = audioCtx.createGain();
+                audioGainNode.gain.value = parseFloat(document.getElementById('volume-slider').value);
+                tempNode.connect(audioGainNode);
+
+                // High-Resolution frequency analyser
+                mainAnalyserNode = audioCtx.createAnalyser();
+                mainAnalyserNode.fftSize = 256;
+                mainAnalyserNode.smoothingTimeConstant = 0.82;
+
+                audioGainNode.connect(mainAnalyserNode);
+                mainAnalyserNode.connect(audioCtx.destination);
+
+            } catch (err) {
+                console.error("Critical failure during Web Audio Context mapping: ", err);
+            }
+        }
+
+        // SLIDER EQUALIZER HARDWARE EVENT HANDLERS
+        function setupEQSlidersInputListeners() {
+            for (let i = 0; i < 5; i++) {
+                const slider = document.getElementById(`eq-band-${i}`);
+                if (!slider) continue;
+
+                // Scroll support
+                slider.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    const delta = e.deltaY < 0 ? 1 : -1;
+                    const nextVal = Math.max(-12, Math.min(12, parseInt(slider.value) + delta));
+                    slider.value = nextVal;
+                    adjustSpecificEQBand(i, nextVal);
+                });
+
+                // Reset on double-click
+                slider.addEventListener('dblclick', () => {
+                    slider.value = 0;
+                    adjustSpecificEQBand(i, 0);
+                });
+
+                // Reset only this slider on context menu right-click
+                slider.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    slider.value = 0;
+                    adjustSpecificEQBand(i, 0);
+                });
+            }
+            updateEQSlidersUI();
+        }
+
+        function adjustSpecificEQBand(idx, val) {
+            const dbVal = parseInt(val);
+            userEQSettings[idx] = dbVal;
+
+            const lbl = document.getElementById(`eq-lbl-${idx}`);
+            if (lbl) lbl.textContent = (dbVal > 0 ? "+" : "") + dbVal + "dB";
+
+            if (eqBiquadFilters[idx]) {
+                if (!audioCtx) connectWebAudioContextHardware();
+                eqBiquadFilters[idx].gain.setValueAtTime(dbVal, audioCtx.currentTime);
+            }
+            saveSystemSettingsToCache();
+        }
+
+        function updateEQSlidersUI() {
+            for (let i = 0; i < 5; i++) {
+                const slider = document.getElementById(`eq-band-${i}`);
+                const val = userEQSettings[i];
+                if (slider) slider.value = val;
+                const lbl = document.getElementById(`eq-lbl-${i}`);
+                if (lbl) lbl.textContent = (val > 0 ? "+" : "") + val + "dB";
+            }
+        }
+
+        function resetAllEQBands() {
+            for (let i = 0; i < 5; i++) {
+                adjustSpecificEQBand(i, 0);
+            }
+            updateEQSlidersUI();
+        }
+
+        // LOCAL RECURSIVE FILE INDEXER (Stabilized)
+        function triggerDirectoryScanner() {
+            document.getElementById('directory-input-scanner').click();
+        }
+
+        function importLocalFolder(e) {
+            const files = e.target.files;
+            if (files && files.length > 0) {
+                processDirectoryTree(files);
+            }
+        }
+
+        function handleMusicFolderDrop(e) {
+            e.preventDefault();
+            const files = e.dataTransfer.files;
+            if (files && files.length > 0) {
+                processDirectoryTree(files);
+            }
+        }
+
+        function processDirectoryTree(files) {
+            const allowedExtensions = ['mp3', 'wav', 'flac', 'ogg', 'm4a', 'aac'];
+            const targetedStreams = Array.from(files).filter(f => {
+                const ext = f.name.split('.').pop().toLowerCase();
+                return allowedExtensions.includes(ext);
+            });
+
+            if (targetedStreams.length === 0) {
+                showUniversalPromptDialog("SCAN ABORTED", "No compliant audio track formats (.mp3, .wav, .flac) resolved inside targeted directories.");
+                return;
+            }
+
+            const overlay = document.getElementById('metadata-scanner-overlay');
+            const pBar = document.getElementById('scanner-progressbar-fill');
+            const pPct = document.getElementById('scanner-progressbar-percent');
+            const pStatus = document.getElementById('scanner-current-status');
+
+            overlay.classList.remove('hidden');
+
+            // Flush default fallback loops only when a genuine directory enters
+            localTracksRegister = [];
+
+            let index = 0;
+            const limit = targetedStreams.length;
+
+            function processNextMetadataIndex() {
+                if (index >= limit) {
+                    setTimeout(() => {
+                        overlay.classList.add('hidden');
+                        updateTracksLibraryListUI();
+                        saveSystemSettingsToCache();
+                        showUniversalPromptDialog("DATABASE COMPILATION COMPLETE", `RetroBeat mapped and synced ${limit} premium tracks recursively!`);
+                    }, 600);
+                    return;
+                }
+
+                const file = targetedStreams[index];
+                const cleanName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+
+                pStatus.textContent = `Processing Track: ${file.name}`;
+                const pct = Math.round((index / limit) * 100);
+                pBar.style.width = `${pct}%`;
+                pPct.textContent = `${pct}%`;
+
+                const generatedId = 'retro_' + Date.now() + '_' + index;
+                const newTrack = {
+                    id: generatedId,
+                    title: cleanName,
+                    artist: "Unknown Artist",
+                    album: "Local Album Catalog",
+                    year: "N/A",
+                    genre: "Chiptune",
+                    bitrate: "320 kbps",
+                    sampleRate: "44.1 kHz",
+                    size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
+                    duration: 180,
+                    isFallback: false,
+                    fileRef: file,
+                    sourceUrl: URL.createObjectURL(file)
+                };
+
+                // Read embedded tags using external library
+                jsmediatags.read(file, {
+                    onSuccess: (tag) => {
+                        if (tag.tags) {
+                            newTrack.title = tag.tags.title || newTrack.title;
+                            newTrack.artist = tag.tags.artist || "Unknown Artist";
+                            newTrack.album = tag.tags.album || "Local Album Catalog";
+                            newTrack.year = tag.tags.year || "N/A";
+                            newTrack.genre = tag.tags.genre || "Chiptune";
+
+                            // Render cover artwork if available
+                            if (tag.tags.picture) {
+                                const { data, format } = tag.tags.picture;
+                                let base64 = "";
+                                for (let j = 0; j < data.length; j++) {
+                                    base64 += String.fromCharCode(data[j]);
+                                }
+                                newTrack.coverArtwork = `data:${format};base64,${window.btoa(base64)}`;
+                            }
+                        }
+
+                        // Temporarily mount to extract active playback length
+                        const tempAudio = new Audio(newTrack.sourceUrl);
+                        tempAudio.addEventListener('loadedmetadata', () => {
+                            newTrack.duration = tempAudio.duration || 180;
+                            localTracksRegister.push(newTrack);
+                            // Retain URL so it can be played later
+                            index++;
+                            processNextMetadataIndex();
+                        });
+                        tempAudio.addEventListener('error', (err) => {
+                            console.warn("Failed to load metadata for: ", newTrack.title, err);
+                            localTracksRegister.push(newTrack);
+                            index++;
+                            processNextMetadataIndex();
+                        });
+                    },
+                    onError: () => {
+                        localTracksRegister.push(newTrack);
+                        index++;
+                        processNextMetadataIndex();
+                    }
+                });
+            }
+
+            processNextMetadataIndex();
+        }
+
+        // RENDER LIBRARY CATALOG UI
+        function updateTracksLibraryListUI() {
+            const viewport = document.getElementById('library-songs-list');
+            const emptyView = document.getElementById('lib-empty-state');
+            viewport.innerHTML = '';
+
+            const list = getFilteredTracksList();
+
+            if (list.length === 0) {
+                viewport.classList.add('hidden');
+                emptyView.classList.remove('hidden');
+                return;
+            }
+
+            emptyView.classList.add('hidden');
+            viewport.classList.remove('hidden');
+
+            list.forEach((track) => {
+                const regIdx = localTracksRegister.findIndex(t => t.id === track.id);
+                const isActive = (regIdx === activeSongIndex);
+                const isFavorite = favoriteTracksIDs.includes(track.id);
+
+                const div = document.createElement('div');
+                div.className = `flex items-center justify-between p-2.5 border-b border-zinc-800/80 transition duration-150 hover:bg-white/5 cursor-pointer ${isActive ? 'bg-lime-500/10 border-l-4 border-l-lime-400' : ''}`;
+                
+                // Clicking selects track metadata immediately. Double clicking starts playback
+                div.addEventListener('click', () => selectAndDisplayTrack(regIdx));
+                div.ondblclick = () => playIndexedTrackDirectly(regIdx);
+
+                div.innerHTML = `
+                    <div class="flex items-center gap-3 min-w-0 flex-grow">
+                        <div class="w-8 h-8 bg-zinc-950/80 border border-zinc-700 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                            ${track.coverArtwork ? `<img src="${track.coverArtwork}" class="w-full h-full object-cover">` : `<span class="text-xs font-bold text-zinc-500">🎵</span>`}
+                        </div>
+                        <div class="flex flex-col min-w-0">
+                            <span class="font-bold text-xs text-white truncate ${isActive ? 'text-lime-400' : ''}">${track.title}</span>
+                            <span class="text-[10px] text-zinc-400 truncate mt-0.5">${track.artist}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-1 flex-shrink-0 font-mono text-[10px] text-zinc-500">
+                        <span>${formatSecondsToMinutes(track.duration)}</span>
+                        <button class="text-xs hover:scale-110 transition p-1" onclick="toggleStarredTrack('${track.id}', event)">
+                            ${isFavorite ? '💖' : '🤍'}
+                        </button>
+                    </div>
+                `;
+                viewport.appendChild(div);
+            });
+        }
+
+        function getFilteredTracksList() {
+            if (activeLibraryTab === 'favorites') {
+                return localTracksRegister.filter(t => favoriteTracksIDs.includes(t.id));
+            } else if (activeLibraryTab === 'queue') {
+                return playbackQueue;
+            } else if (activeLibraryTab === 'recent') {
+                return recentlyPlayedTracks;
+            }
+            return localTracksRegister;
+        }
+
+        function switchLibraryTab(tab) {
+            activeLibraryTab = tab;
+            ['all', 'favorites', 'queue', 'recent'].forEach(t => {
+                const btn = document.getElementById(`btn-tab-${t}`);
+                if (btn) {
+                    if (t === tab) btn.classList.add('active');
+                    else btn.classList.remove('active');
+                }
+            });
+            updateTracksLibraryListUI();
+        }
+
+        function triggerLocalLibrarySearch() {
+            const query = document.getElementById('lib-search-input').value.toLowerCase().trim();
+            const list = document.getElementById('library-songs-list');
+            const items = list.children;
+
+            const filteredList = getFilteredTracksList();
+            filteredList.forEach((track, idx) => {
+                const matches = track.title.toLowerCase().includes(query) || 
+                                track.artist.toLowerCase().includes(query) || 
+                                track.album.toLowerCase().includes(query);
+                if (items[idx]) {
+                    if (matches) items[idx].classList.remove('hidden');
+                    else items[idx].classList.add('hidden');
+                }
+            });
+        }
+
+        // CORE PLAYBACK STATE ENGINE (Stabilized)
+        function selectAndDisplayTrack(idx) {
+            if (idx < 0 || idx >= localTracksRegister.length) return;
+            activeSongIndex = idx;
+
+            const track = localTracksRegister[idx];
+
+            // Rebuild details center pane immediately
+            document.getElementById('core-track-title').textContent = track.title;
+            document.getElementById('core-track-artist').textContent = track.artist;
+            document.getElementById('core-track-album').textContent = track.album;
+
+            // Rebuild sticky navigation details
+            document.getElementById('sticky-title').textContent = track.title;
+            document.getElementById('sticky-artist').textContent = track.artist;
+
+            // Update mini-player widget details
+            document.getElementById('mini-title').textContent = track.title;
+            document.getElementById('mini-artist').textContent = track.artist;
+
+            // Specs
+            document.getElementById('spec-lbl-codec').textContent = track.isFallback ? "CHI-8" : "RAW";
+            document.getElementById('spec-lbl-sample').textContent = track.sampleRate;
+            document.getElementById('spec-lbl-size').textContent = track.size;
+
+            // Load covers
+            const container = document.getElementById('hero-album-cover-holder');
+            const canvas = document.getElementById('generative-pixel-cover');
+            const miniCover = document.getElementById('mini-cover');
+
+            if (track.coverArtwork) {
+                container.style.backgroundImage = `url(${track.coverArtwork})`;
+                canvas.classList.add('hidden');
+                miniCover.style.backgroundImage = `url(${track.coverArtwork})`;
+                applyAmbientBlurBackdrop(track.coverArtwork);
+            } else {
+                container.style.backgroundImage = "none";
+                canvas.classList.remove('hidden');
+                miniCover.style.backgroundImage = "none";
+                drawDeterministicPixelArtCover(track.title);
+                applyDeterministicAmbientBlur(track.title);
+            }
+
+            // Sync favorited active trackers
+            const star = favoriteTracksIDs.includes(track.id);
+            const toggler = document.getElementById('favorite-track-toggler');
+            if (star) {
+                toggler.classList.add('text-rose-500');
+                toggler.classList.remove('text-zinc-500');
+            } else {
+                toggler.classList.remove('text-rose-500');
+                toggler.classList.add('text-zinc-500');
+            }
+
+            // Time seek initial values
+            document.getElementById('global-seek-bar').value = 0;
+            document.getElementById('global-seek-bar').max = track.duration;
+            document.getElementById('seek-lbl-current').textContent = "00:00";
+            document.getElementById('seek-lbl-total').textContent = formatSecondsToMinutes(track.duration);
+
+            updateTracksLibraryListUI();
+            updateMainDeckLayoutTabs();
+        }
+
+        function playIndexedTrackDirectly(idx) {
+            connectWebAudioContextHardware();
+            selectAndDisplayTrack(idx);
+
+            const track = localTracksRegister[idx];
+
+            if (track.isFallback) {
+                // Play synthetic 8-bit sounds via Native Oscillator pipeline
+                play8BitChiptuneSynth(track.id);
+            } else {
+                stopChiptuneSynthScheduler();
+                
+                if (!track.sourceUrl && track.fileRef) {
+                    track.sourceUrl = URL.createObjectURL(track.fileRef);
+                }
+                
+                globalAudio.src = track.sourceUrl;
+                globalAudio.load();
+                
+                // Re-apply rate modifications
+                adjustPlaybackSpeedRate(document.getElementById('pitch-slider').value);
+
+                const playPromise = globalAudio.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        isTrackPlaying = true;
+                        updateControlDeckButtonsUI(true);
+                        triggerMascotSingingAnimation(true);
+                    }).catch(err => {
+                        console.error("Playback failed for track: ", track.title, " Error: ", err);
+                        showUniversalPromptDialog("PLAYBACK ERROR", "Could not play track: " + err.message);
+                    });
+                }
+            }
+
+            // Cache played history
+            if (!recentlyPlayedTracks.some(t => t.id === track.id)) {
+                recentlyPlayedTracks.unshift(track);
+                if (recentlyPlayedTracks.length > 20) recentlyPlayedTracks.pop();
+            }
+
+            // Queue checks
+            if (playbackQueue.length === 0) {
+                playbackQueue = [...localTracksRegister];
+            }
+
+            updateMainDeckLayoutTabs();
+            saveSystemSettingsToCache();
+        }
+
+        function togglePlayPauseState() {
+            connectWebAudioContextHardware();
+            if (activeSongIndex === -1 && localTracksRegister.length > 0) {
+                playIndexedTrackDirectly(0);
+                return;
+            }
+            if (activeSongIndex === -1) return;
+
+            const activeTrack = localTracksRegister[activeSongIndex];
+
+            if (isTrackPlaying) {
+                if (activeTrack.isFallback) {
+                    stopChiptuneSynthScheduler();
+                } else {
+                    globalAudio.pause();
+                }
+                isTrackPlaying = false;
+                updateControlDeckButtonsUI(false);
+                triggerMascotSingingAnimation(false);
+            } else {
+                if (activeTrack.isFallback) {
+                    play8BitChiptuneSynth(activeTrack.id);
+                    isTrackPlaying = true;
+                    updateControlDeckButtonsUI(true);
+                    triggerMascotSingingAnimation(true);
+                } else {
+                    const playPromise = globalAudio.play();
+                    if (playPromise !== undefined) {
+                        playPromise.then(() => {
+                            isTrackPlaying = true;
+                            updateControlDeckButtonsUI(true);
+                            triggerMascotSingingAnimation(true);
+                        }).catch(err => {
+                            console.error("Resuming playback failed: ", err);
+                            showUniversalPromptDialog("PLAYBACK ERROR", "Could not resume track: " + err.message);
+                        });
+                    }
+                }
+            }
+        }
+
+        function stopAudioPlayback() {
+            stopChiptuneSynthScheduler();
+            globalAudio.pause();
+            globalAudio.currentTime = 0;
+            isTrackPlaying = false;
+            updateControlDeckButtonsUI(false);
+            triggerMascotSingingAnimation(false);
+            
+            document.getElementById('global-seek-bar').value = 0;
+            document.getElementById('seek-lbl-current').textContent = "00:00";
+        }
+
+        function playNextTrack() {
+            if (localTracksRegister.length === 0) return;
+
+            let nextIdx = activeSongIndex + 1;
+            if (isShuffleModeEnabled) {
+                nextIdx = Math.floor(Math.random() * localTracksRegister.length);
+            } else if (nextIdx >= localTracksRegister.length) {
+                nextIdx = isRepeatModeEnabled ? 0 : -1;
+            }
+
+            if (nextIdx !== -1) {
+                playIndexedTrackDirectly(nextIdx);
+            } else {
+                stopAudioPlayback();
+            }
+        }
+
+        function playPreviousTrack() {
+            if (localTracksRegister.length === 0) return;
+            let prevIdx = activeSongIndex - 1;
+            if (prevIdx < 0) prevIdx = localTracksRegister.length - 1;
+            playIndexedTrackDirectly(prevIdx);
+        }
+
+        function toggleShuffleMode() {
+            isShuffleModeEnabled = !isShuffleModeEnabled;
+            const btn = document.getElementById('ctrl-btn-shuffle');
+            if (isShuffleModeEnabled) btn.classList.add('active');
+            else btn.classList.remove('active');
+            saveSystemSettingsToCache();
+        }
+
+        function toggleRepeatMode() {
+            isRepeatModeEnabled = !isRepeatModeEnabled;
+            const btn = document.getElementById('ctrl-btn-repeat');
+            if (isRepeatModeEnabled) btn.classList.add('active');
+            else btn.classList.remove('active');
+            saveSystemSettingsToCache();
+        }
+
+        function adjustVolumeLevel(val) {
+            const vol = parseFloat(val);
+            globalAudio.volume = vol;
+            if (audioGainNode) {
+                audioGainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
+            }
+            document.getElementById('volume-lbl-display').textContent = Math.round(vol * 100) + "%";
+            saveSystemSettingsToCache();
+        }
+
+        function adjustPlaybackSpeedRate(val) {
+            const raw = parseFloat(val);
+            const rate = raw / 100;
+            globalAudio.playbackRate = rate;
+            document.getElementById('pitch-lbl-display').textContent = rate.toFixed(1) + "x";
+            saveSystemSettingsToCache();
+        }
+
+        function adjustPlaybackTimeline(e) {
+            const pos = parseFloat(e.target.value);
+            if (!localTracksRegister[activeSongIndex]?.isFallback) {
+                globalAudio.currentTime = pos;
+            }
+        }
+
+        function skipPlaybackInterval(seconds) {
+            if (activeSongIndex === -1 || localTracksRegister[activeSongIndex]?.isFallback) return;
+            let nextPos = globalAudio.currentTime + seconds;
+            nextPos = Math.max(0, Math.min(globalAudio.duration, nextPos));
+            globalAudio.currentTime = nextPos;
+        }
+
+        function toggleStarredTrack(id, event) {
+            if (event) event.stopPropagation();
+            const index = favoriteTracksIDs.indexOf(id);
+            if (index === -1) {
+                favoriteTracksIDs.push(id);
+            } else {
+                favoriteTracksIDs.splice(index, 1);
+            }
+            updateTracksLibraryListUI();
+            saveSystemSettingsToCache();
+        }
+
+        function toggleActiveTrackStarredState() {
+            if (activeSongIndex !== -1) {
+                const current = localTracksRegister[activeSongIndex];
+                toggleStarredTrack(current.id);
+
+                const star = favoriteTracksIDs.includes(current.id);
+                const toggler = document.getElementById('favorite-track-toggler');
+                if (star) {
+                    toggler.classList.add('text-rose-500');
+                    toggler.classList.remove('text-zinc-500');
+                } else {
+                    toggler.classList.remove('text-rose-500');
+                    toggler.classList.add('text-zinc-500');
+                }
+            }
+        }
+
+        // FALLBACK 8-BIT OSCILLATOR CHIPTUNE SYNTHESIZER
+        let chiptuneIntervalRef = null;
+        function play8BitChiptuneSynth(id) {
+            stopChiptuneSynthScheduler();
+            connectWebAudioContextHardware();
+
+            let step = 0;
+            const bpm = 120;
+            const duration = 60 / bpm / 2;
+
+            let noteSequence = [];
+            if (id === "synth_1") {
+                noteSequence = [60, 63, 65, 67, 70, 67, 65, 63, 60, 60, 63, 65, 67, 72, 70, 67];
+            } else if (id === "synth_2") {
+                noteSequence = [58, 62, 65, 69, 70, 69, 65, 62, 58, 58, 62, 65, 69, 74, 70, 69];
+            } else {
+                noteSequence = [64, 67, 71, 74, 76, 74, 71, 67, 64, 64, 67, 71, 74, 79, 76, 71];
+            }
+
+            const originStart = audioCtx.currentTime;
+
+            chiptuneIntervalRef = setInterval(() => {
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = "square";
+                const midiNote = noteSequence[step % noteSequence.length];
+                osc.frequency.value = Math.pow(2, (midiNote - 69) / 12) * 440;
+
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(0.08, now + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + duration - 0.01);
+
+                osc.connect(gain);
+                // Connect direct into audio visualizer chain
+                gain.connect(audioGainNode);
+
+                osc.start(now);
+                osc.stop(now + duration);
+
+                // Quick retro hi-hat sound
+                if (step % 2 === 0) {
+                    playSyntheticHatsSound(now);
+                }
+
+                step++;
+                const elapsed = audioCtx.currentTime - originStart;
+                document.getElementById('global-seek-bar').value = elapsed % 45;
+                document.getElementById('seek-lbl-current').textContent = formatSecondsToMinutes(elapsed % 45);
+            }, duration * 1000);
+
+            isTrackPlaying = true;
+            updateControlDeckButtonsUI(true);
+            triggerMascotSingingAnimation(true);
+        }
+
+        function playSyntheticHatsSound(time) {
+            const bufferSize = audioCtx.sampleRate * 0.04;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+
+            const source = audioCtx.createBufferSource();
+            source.buffer = buffer;
+
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = "highpass";
+            filter.frequency.value = 8000;
+
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(0.02, time);
+            gain.gain.exponentialRampToValueAtTime(0.001, time + 0.03);
+
+            source.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioGainNode);
+
+            source.start(time);
+        }
+
+        function stopChiptuneSynthScheduler() {
+            if (chiptuneIntervalRef) {
+                clearInterval(chiptuneIntervalRef);
+                chiptuneIntervalRef = null;
+            }
+        }
+
+        // SPECTRUM ANALYSER VISUALIZER MODULES
+        function startSpectrumVisualizerRenderLoop() {
+            const canvas = document.getElementById('live-spectrum-canvas');
+            const ctx = canvas.getContext('2d');
+
+            function render() {
+                requestAnimationFrame(render);
+                const w = canvas.width = canvas.parentElement.clientWidth;
+                const h = canvas.height = canvas.parentElement.clientHeight;
+
+                ctx.fillStyle = "rgba(10, 10, 12, 0.95)";
+                ctx.fillRect(0, 0, w, h);
+
+                if (!mainAnalyserNode) {
+                    ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(0, h/2);
+                    ctx.lineTo(w, h/2);
+                    ctx.stroke();
+                    return;
+                }
+
+                const len = mainAnalyserNode.frequencyBinCount;
+                const data = new Uint8Array(len);
+
+                if (visualizerRenderStyle === 'wave') {
+                    mainAnalyserNode.getByteTimeDomainData(data);
+                } else {
+                    mainAnalyserNode.getByteFrequencyData(data);
+                }
+
+                ctx.strokeStyle = activeAccentHex;
+                ctx.fillStyle = activeAccentHex;
+                ctx.lineWidth = 2.5;
+
+                if (visualizerRenderStyle === 'bars') {
+                    const barWidth = (w / len) * 1.5;
+                    let x = 0;
+                    for (let i = 0; i < len; i++) {
+                        const val = (data[i] / 255) * h * 0.85;
+                        ctx.fillRect(x, h - val, barWidth - 2, val);
+                        x += barWidth;
+                    }
+                } else if (visualizerRenderStyle === 'wave') {
+                    ctx.beginPath();
+                    const slice = w / len;
+                    let x = 0;
+                    for (let i = 0; i < len; i++) {
+                        const v = data[i] / 128.0;
+                        const y = (v * h) / 2;
+                        if (i === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                        x += slice;
+                    }
+                    ctx.lineTo(w, h / 2);
+                    ctx.stroke();
+                } else if (visualizerRenderStyle === 'circle') {
+                    const cx = w / 2;
+                    const cy = h / 2;
+                    const radius = Math.min(cx, cy) * 0.55;
+
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                    ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    for (let i = 0; i < len; i += 2) {
+                        const angle = (i / len) * Math.PI * 2;
+                        const offset = (data[i] / 255) * 22;
+                        const x = cx + Math.cos(angle) * (radius + offset);
+                        const y = cy + Math.sin(angle) * (radius + offset);
+                        if (i === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    }
+                    ctx.closePath();
+                    ctx.stroke();
+                } else if (visualizerRenderStyle === 'matrix') {
+                    const cols = 16;
+                    const rows = 8;
+                    const blockW = w / cols;
+                    const blockH = h / rows;
+
+                    for (let c = 0; c < cols; c++) {
+                        const binIndex = Math.floor((c / cols) * len);
+                        const activeBlocks = Math.floor((data[binIndex] / 255) * rows);
+
+                        for (let r = 0; r < rows; r++) {
+                            if (r < activeBlocks) {
+                                ctx.fillStyle = activeAccentHex;
+                                ctx.fillRect(c * blockW + 2, h - (r + 1) * blockH + 2, blockW - 4, blockH - 4);
+                            }
+                        }
+                    }
+                }
+            }
+            render();
+        }
+
+        function setVisualizerStyle(style) {
+            visualizerRenderStyle = style;
+            ['bars', 'wave', 'circle', 'matrix'].forEach(s => {
+                const btn = document.getElementById(`viz-btn-${s}`);
+                if (btn) {
+                    if (s === style) btn.classList.add('active');
+                    else btn.classList.remove('active');
+                }
+            });
+            saveSystemSettingsToCache();
+        }
+
+        // DETERMINISTIC PIXEL ALBUM COVERS DRAWING
+        function drawDeterministicPixelArtCover(title) {
+            const canvas = document.getElementById('generative-pixel-cover');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            let hash = 0;
+            for (let i = 0; i < title.length; i++) {
+                hash += title.charCodeAt(i);
+            }
+
+            const colors = [
+                `hsl(${hash % 360}, 70%, 45%)`,
+                `hsl(${(hash + 120) % 360}, 60%, 25%)`,
+                `hsl(${(hash + 240) % 360}, 80%, 55%)`,
+                `#0e0f11`
+            ];
+
+            ctx.fillStyle = colors[1];
+            ctx.fillRect(0, 0, w, h);
+
+            const gridBlock = 16;
+            for (let x = 0; x < w; x += gridBlock) {
+                for (let y = 0; y < h; y += gridBlock) {
+                    const sin = Math.sin(x * hash + y) * 888;
+                    const colorIdx = Math.floor((sin - Math.floor(sin)) * colors.length);
+                    ctx.fillStyle = colors[colorIdx];
+                    ctx.fillRect(x, y, gridBlock, gridBlock);
+                }
+            }
+        }
+
+        function applyAmbientBlurBackdrop(artworkUrl) {
+            const img = new Image();
+            img.src = artworkUrl;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 10;
+                canvas.height = 10;
+                ctx.drawImage(img, 0, 0, 10, 10);
+
+                const data = ctx.getImageData(0,0,10,10).data;
+                const palette = [];
+                for (let i = 0; i < data.length; i += 16) {
+                    const r = data[i];
+                    const g = data[i+1];
+                    const b = data[i+2];
+                    palette.push(`rgb(${r}, ${g}, ${b})`);
+                }
+
+                const gradient = `radial-gradient(circle, ${palette[0] || '#111'} 0%, ${palette[1] || '#050505'} 65%, ${palette[2] || '#000'} 100%)`;
+                document.getElementById('dynamic-backdrop').style.background = gradient;
+            };
+        }
+
+        function applyDeterministicAmbientBlur(title) {
+            let hash = 0;
+            for (let i = 0; i < title.length; i++) {
+                hash += title.charCodeAt(i);
+            }
+            const c1 = `hsl(${hash % 360}, 75%, 40%)`;
+            const c2 = `hsl(${(hash + 130) % 360}, 55%, 20%)`;
+            document.getElementById('dynamic-backdrop').style.background = `radial-gradient(circle, ${c1} 0%, ${c2} 70%, #000000 100%)`;
+        }
+
+        // ============================================
+        // SIGNATURE COMPANION (White & Orange Cute Pixel Cat)
+        // ============================================
+        const pixelCatAnimations = {
+            // Sits still, calm, blinks occasionally, ears twitching, mouth closed
+            idle: [
+                "................",
+                "....0......0....",
+                "...020....020...",
+                "..022200002220..",
+                "..021111111120..",
+                ".02111111111120.",
+                ".01144411444110.",
+                ".01143411434110.",
+                ".01111155111110.",
+                "..011111111110..",
+                "...0011111100...",
+                "....0111111000..",
+                "....01111110110.",
+                "....0111111110..",
+                "....0110000110..",
+                "....000..000...."
+            ],
+            idle_tail: [
+                "................",
+                "....0......0....",
+                "...020....020...",
+                "..022200002220..",
+                "..021111111120..",
+                ".02111111111120.",
+                ".01144411444110.",
+                ".01143411434110.",
+                ".01111155111110.",
+                "..011111111110..",
+                "...00111111000..",
+                "....01111110110.",
+                "....0111111000..",
+                "....0111111110..",
+                "....0110000110..",
+                "....000..000...."
+            ],
+            // Blink closed state
+            idle_blink: [
+                "................",
+                "....0......0....",
+                "...020....020...",
+                "..022200002220..",
+                "..021111111120..",
+                ".02111111111120.",
+                ".01100011000110.",
+                ".01111111111110.",
+                ".01111155111110.",
+                "..011111111110..",
+                "...0011111100...",
+                "....0111111000..",
+                "....01111110110.",
+                "....0111111110..",
+                "....0110000110..",
+                "....000..000...."
+            ],
+            // Ears twitch state
+            idle_twitch: [
+                "................",
+                "....00.....0....",
+                "...0220...020...",
+                "..022200002220..",
+                "..021111111120..",
+                ".02111111111120.",
+                ".01144411444110.",
+                ".01143411434110.",
+                ".01111155111110.",
+                "..011111111110..",
+                "...0011111100...",
+                "....0111111000..",
+                "....01111110110.",
+                "....0111111110..",
+                "....0110000110..",
+                "....000..000...."
+            ],
+            // Soft body sway left
+            dance_sway_left: [
+                "................",
+                "...0......0.....",
+                "..020....020....",
+                ".022200002220...",
+                ".021111111120...",
+                "02111111111120..",
+                "01144411444110..",
+                "01143411434110..",
+                "01111155111110..",
+                ".011116611110...",
+                "..0011111100....",
+                "...0111111000...",
+                "...01111110110..",
+                "...0111111110...",
+                "...0110000110...",
+                "...000..000....."
+            ],
+            // Soft body sway right
+            dance_sway_right: [
+                "................",
+                ".....0......0...",
+                "....020....020..",
+                "...022200002220.",
+                "...021111111120.",
+                "..02111111111120",
+                "..01144411444110",
+                "..01143411434110",
+                "..01111155111110",
+                "...011116611110.",
+                "....00111111000.",
+                ".....01111110110",
+                ".....0111111000.",
+                ".....0111111110.",
+                ".....0110000110.",
+                ".....000..000..."
+            ]
+        };
+
+        function startMascotPetAnimationLoop() {
+            const svg = document.getElementById('cat-pixel-canvas');
+
+            setInterval(() => {
+                if (!preferencesCompanionActive) return;
+                catFrameCounter++;
+
+                let yBounce = "0px";
+                let rotation = 0;
+
+                // Sync base reactions via actual frequency analysis of audio elements
+                let bassFrequencyVal = 0;
+                if (mainAnalyserNode && isTrackPlaying) {
+                    const data = new Uint8Array(16);
+                    mainAnalyserNode.getByteFrequencyData(data);
+                    bassFrequencyVal = data[1] || 0;
+                }
+
+                // Determine active palette based on Game Boy/Stardew warm aesthetics
+                const orangeTabbyPalette = {
+                    outline: '#2e1c0c',
+                    body: '#ffffff',     // White cat base
+                    secondary: '#e67e22', // Orange patches
+                    eyeOuter: '#2c3e50',
+                    eyeInner: '#ffffff',
+                    pinkAccent: '#fc9ebd',
+                    openMouth: '#c0392b'
+                };
+
+                let targetedGrid = pixelCatAnimations.idle;
+
+                if (isTrackPlaying) {
+                    // Dancing - Bob head up/down and sway left/right
+                    const cycle = catFrameCounter % 4;
+                    if (cycle === 0) {
+                        targetedGrid = pixelCatAnimations.dance_sway_left;
+                        yBounce = "-4px";
+                    } else if (cycle === 2) {
+                        targetedGrid = pixelCatAnimations.dance_sway_right;
+                        yBounce = "0px";
+                    } else {
+                        targetedGrid = pixelCatAnimations.idle;
+                        yBounce = "-2px";
+                    }
+                    if (bassFrequencyVal > 190) {
+                        yBounce = "-6px"; // Jump slightly higher on heavy beat drops
+                    }
+                } else {
+                    // Idle - Blinking & Ear Twitching occasionally
+                    const now = Date.now();
+                    if (now - catLastActionTime > 3000) {
+                        const rng = Math.random();
+                        if (rng < 0.4) {
+                            isBlinking = true;
+                            setTimeout(() => { isBlinking = false; }, 300);
+                        } else if (rng < 0.7) {
+                            isEarTwitching = true;
+                            setTimeout(() => { isEarTwitching = false; }, 400);
+                        }
+                        catLastActionTime = now;
+                    }
+
+                    if (isBlinking) {
+                        targetedGrid = pixelCatAnimations.idle_blink;
+                    } else if (isEarTwitching) {
+                        targetedGrid = pixelCatAnimations.idle_twitch;
+                    } else {
+                        // Gentle breathing animation and tail sway
+                        yBounce = (catFrameCounter % 6 < 3) ? "1px" : "0px";
+                        if (catFrameCounter % 8 < 4) {
+                            targetedGrid = pixelCatAnimations.idle_tail;
+                        }
+                    }
+                }
+
+                let content = '';
+                for (let r = 0; r < 16; r++) {
+                    const line = targetedGrid[r] || "................";
+                    for (let c = 0; c < 16; c++) {
+                        const char = line[c];
+                        let fill = 'transparent';
+
+                        if (char === '0') fill = orangeTabbyPalette.outline;
+                        else if (char === '1') fill = orangeTabbyPalette.body;
+                        else if (char === '2') fill = orangeTabbyPalette.secondary;
+                        else if (char === '3') fill = orangeTabbyPalette.eyeInner;
+                        else if (char === '4') fill = orangeTabbyPalette.eyeOuter;
+                        else if (char === '5') fill = orangeTabbyPalette.pinkAccent;
+                        else if (char === '6') fill = orangeTabbyPalette.openMouth;
+
+                        if (fill !== 'transparent') {
+                            content += `<rect x="${c}" y="${r}" width="1" height="1" fill="${fill}" />`;
+                        }
+                    }
+                }
+
+                svg.innerHTML = content;
+                document.getElementById('pet-companion-avatar').style.transform = `translateY(${yBounce}) rotate(${rotation}deg)`;
+
+            }, 250);
+        }
+
+        // Floating dynamic music notes generator
+        function triggerMascotSingingAnimation(active) {
+            if (musicNoteSpawnIntervalRef) {
+                clearInterval(musicNoteSpawnIntervalRef);
+                musicNoteSpawnIntervalRef = null;
+            }
+
+            if (!active) return;
+
+            musicNoteSpawnIntervalRef = setInterval(() => {
+                if (!preferencesCompanionActive) return;
+                spawnFloatingMusicNote();
+            }, 1000);
+        }
+
+        function spawnFloatingMusicNote() {
+            const screen = document.getElementById('pet-display-screen');
+            if (!screen) return;
+
+            const notes = ['♪', '♫', '♬'];
+            const noteEl = document.createElement('div');
+            noteEl.textContent = notes[Math.floor(Math.random() * notes.length)];
+            noteEl.className = 'absolute text-base font-bold pointer-events-none select-none animate-float-note';
+            
+            noteEl.style.color = activeAccentHex;
+            noteEl.style.left = `${35 + Math.random() * 30}%`;
+            noteEl.style.bottom = '35px';
+
+            screen.appendChild(noteEl);
+
+            setTimeout(() => {
+                noteEl.remove();
+            }, 2000);
+        }
+
+        // TIME TIMERS AND CLOCKS PROMPTS
+        function startSystemRealTimeClock() {
+            setInterval(() => {
+                const date = new Date();
+                let hours = date.getHours();
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                const seconds = date.getSeconds().toString().padStart(2, '0');
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12;
+                hours = hours ? hours : 12;
+                document.getElementById('clock-display').textContent = `${hours}:${minutes}:${seconds} ${ampm}`;
+            }, 1000);
+        }
+
+        function triggerSleepTimerPrompt() {
+            showUniversalPromptInput("SLEEP TIMER SETUP", "Input timer duration in minutes to automatically suspend audio:", (mins) => {
+                const num = parseInt(mins);
+                if (!isNaN(num) && num > 0) {
+                    sleepTimerSecondsRemaining = num * 60;
+                    if (sleepTimerIntervalRef) clearInterval(sleepTimerIntervalRef);
+
+                    sleepTimerIntervalRef = setInterval(() => {
+                        sleepTimerSecondsRemaining--;
+                        if (sleepTimerSecondsRemaining <= 0) {
+                            clearInterval(sleepTimerIntervalRef);
+                            stopAudioPlayback();
+                            showUniversalPromptDialog("SLEEP TIMER TRIGGERED", "Sleep timer countdown expired. Audio stream suspended safely.");
+                        }
+                    }, 1000);
+                    showUniversalPromptDialog("TIMER ACTIVATED", `RetroBeat sleep timer is armed to shutdown playback in ${num} minutes.`);
+                }
+            });
+        }
+
+        // UNIVERSAL POPUP LOGIC (Replacing standard window.alert dialogs)
+        let universalDialogCallback = null;
+
+        function showUniversalPromptDialog(title, text) {
+            document.getElementById('u-prompt-title').textContent = title;
+            document.getElementById('u-prompt-body').innerHTML = text;
+            document.getElementById('u-prompt-input-wrapper').classList.add('hidden');
+            document.getElementById('u-prompt-btn-cancel').classList.add('hidden');
+            document.getElementById('universal-prompt-box').classList.remove('hidden');
+            universalDialogCallback = null;
+        }
+
+        function showUniversalPromptInput(title, text, callback) {
+            document.getElementById('u-prompt-title').textContent = title;
+            document.getElementById('u-prompt-body').innerHTML = text;
+            document.getElementById('u-prompt-input-wrapper').classList.remove('hidden');
+            document.getElementById('u-prompt-btn-cancel').classList.remove('hidden');
+            document.getElementById('universal-prompt-box').classList.remove('hidden');
+            document.getElementById('u-prompt-text-input').value = '';
+            document.getElementById('u-prompt-text-input').focus();
+            universalDialogCallback = callback;
+        }
+
+        function closeUniversalPromptDialog(confirmed) {
+            document.getElementById('universal-prompt-box').classList.add('hidden');
+            const val = document.getElementById('u-prompt-text-input').value;
+            if (universalDialogCallback && confirmed) {
+                universalDialogCallback(val);
+            }
+            universalDialogCallback = null;
+        }
+
+        // TOGGLE SETTINGS Preferences MODALS
+        function toggleSettingsModal(active) {
+            const overlay = document.getElementById('preferences-settings-modal');
+            if (active) overlay.classList.remove('hidden');
+            else overlay.classList.add('hidden');
+        }
+
+        function triggerSettingsPreferencesModal() {
+            toggleSettingsModal(true);
+        }
+
+        function toggleMiniPlayerOption(enabled) {
+            toggleMiniPlayerWidget(enabled);
+        }
+
+        function toggleMiniPlayerWidget(active) {
+            const widget = document.getElementById('mini-player-widget');
+            if (active) {
+                widget.style.display = 'block';
+                widget.style.top = '120px';
+                widget.style.right = '40px';
+            } else {
+                widget.style.display = 'none';
+            }
+            document.getElementById('pref-miniplayer-active').checked = active;
+        }
+
+        function updateControlDeckButtonsUI(active) {
+            const btn = document.getElementById('ctrl-btn-play');
+            if (btn) btn.textContent = active ? "⏸" : "▶";
+
+            const miniBtn = document.getElementById('mini-btn-play');
+            if (miniBtn) miniBtn.textContent = active ? "⏸" : "▶";
+        }
+
+        // TABS DECKS CONTROLS
+        function setMainDeckTab(tab) {
+            activeDeckTab = tab;
+            ['queue', 'recent', 'stats'].forEach(t => {
+                const btn = document.getElementById(`deck-btn-${t}`);
+                if (btn) {
+                    if (t === tab) btn.classList.add('active');
+                    else btn.classList.remove('active');
+                }
+            });
+            updateMainDeckLayoutTabs();
+        }
+
+        function updateMainDeckLayoutTabs() {
+            const container = document.getElementById('main-deck-container');
+            container.innerHTML = '';
+
+            if (activeDeckTab === 'queue') {
+                if (playbackQueue.length === 0) {
+                    container.innerHTML = `<span class="text-xs text-zinc-500 p-4 block">Play Queue is currently empty.</span>`;
+                    return;
+                }
+                playbackQueue.slice(0, 10).forEach((track, i) => {
+                    const div = document.createElement('div');
+                    div.className = "flex justify-between items-center bg-zinc-950/40 p-2 border border-zinc-800 rounded-sm text-xs";
+                    div.innerHTML = `
+                        <div class="truncate">
+                            <span class="text-zinc-500 font-mono text-[10px] mr-1">#${i+1}</span>
+                            <span class="font-bold text-white font-sans">${track.title}</span>
+                            <span class="text-zinc-400 font-sans"> - ${track.artist}</span>
+                        </div>
+                        <button class="text-rose-500 text-[10px] font-bold label-font" onclick="removeFromQueueByIndex(${i})">REMOVE</button>
+                    `;
+                    container.appendChild(div);
+                });
+            } else if (activeDeckTab === 'recent') {
+                if (recentlyPlayedTracks.length === 0) {
+                    container.innerHTML = `<span class="text-xs text-zinc-500 p-4 block">No history found. Double click library songs to build history.</span>`;
+                    return;
+                }
+                recentlyPlayedTracks.slice(0, 10).forEach((track, i) => {
+                    const div = document.createElement('div');
+                    div.className = "flex justify-between items-center bg-zinc-950/40 p-2 border border-zinc-800 rounded-sm text-xs";
+                    div.innerHTML = `
+                        <div class="truncate">
+                            <span class="text-zinc-500 font-mono text-[10px] mr-1">#${i+1}</span>
+                            <span class="font-bold text-white font-sans">${track.title}</span>
+                        </div>
+                        <span class="text-[10px] font-mono text-zinc-500">${formatSecondsToMinutes(track.duration)}</span>
+                    `;
+                    container.appendChild(div);
+                });
+            } else if (activeDeckTab === 'stats') {
+                if (activeSongIndex === -1) {
+                    container.innerHTML = `<span class="text-xs text-zinc-500 p-4 block">Choose a song to inspect real-time stream channel parameters.</span>`;
+                    return;
+                }
+                const track = localTracksRegister[activeSongIndex];
+                container.innerHTML = `
+                    <div class="grid grid-cols-2 gap-4 text-xs p-2.5 font-mono">
+                        <div><span class="text-zinc-500">FORMAT BITRATE:</span> <span class="text-lime-400">${track.bitrate}</span></div>
+                        <div><span class="text-zinc-500">PHASE MODE:</span> <span class="text-lime-400">STEREO</span></div>
+                        <div><span class="text-zinc-500">FILE CAPACITY:</span> <span class="text-lime-400">${track.size}</span></div>
+                        <div><span class="text-zinc-500">SAMPLING VALUE:</span> <span class="text-lime-400">${track.sampleRate}</span></div>
+                    </div>
+                `;
+            }
+        }
+
+        function removeFromQueueByIndex(idx) {
+            playbackQueue.splice(idx, 1);
+            updateMainDeckLayoutTabs();
+            saveSystemSettingsToCache();
+        }
+
+        function formatSecondsToMinutes(sec) {
+            if (isNaN(sec) || sec === Infinity) return "00:00";
+            const m = Math.floor(sec / 60);
+            const s = Math.floor(sec % 60);
+            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+    </script>
+</body>
+</html>
